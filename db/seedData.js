@@ -2,14 +2,73 @@
 // const { } = require('./');
 const client = require("./client")
 
+const {
+  createUser,
+  createActivity,
+  createRoutine,
+  getRoutinesWithoutActivities,
+  getAllActivities,
+  addActivityToRoutine,
+} = require("./index.js");
+
 async function dropTables() {
-  console.log("Dropping All Tables...")
+  console.log("Dropping All Tables...");
+  //console.log("CLIENT", client);
   // drop all tables, in the correct order
+  // eslint-disable-next-line no-useless-catch
+
+  try{
+    console.log("HelloWorld")
+  await client.query(
+  ` DROP TABLE IF EXISTS routine_activities; 
+    DROP TABLE IF EXISTS routines;  
+    DROP TABLE IF EXISTS activities;
+    DROP TABLE IF EXISTS users;
+  `);
+  console.log("HelloWorld")
+} catch (error) {
+  console.error
+  throw error
 }
+}
+
 
 async function createTables() {
   console.log("Starting to build tables...")
   // create all tables, in the correct order
+   await client.query(
+    `
+    CREATE TABLE users (
+      id SERIAL PRIMARY KEY,
+      username varchar(150) UNIQUE NOT NULL,
+      password varchar(150) NOT NULL);
+
+    CREATE TABLE activities (
+      id SERIAL PRIMARY KEY,
+      name varchar(150) UNIQUE NOT NULL,
+      description text NOT NULL);
+
+
+    CREATE TABLE routines (
+      id SERIAL PRIMARY KEY, 
+      "creatorId" integer REFERENCES users(id),
+      "isPublic" BOOLEAN DEFAULT false, 
+      name varchar(150) UNIQUE NOT NULL,
+      goal text NOT NULL);
+    
+    
+      CREATE TABLE routines_activities (
+        id SERIAL PRIMARY KEY,
+        "routineId" integer REFERENCES routines(id),
+        "activityId" integer REFERENCES activities(id),
+        duration integer, 
+        count integer,
+        UNIQUE("routineId","activityId"))
+    
+
+    
+    `
+  );
 }
 
 /* 
@@ -179,7 +238,9 @@ async function createInitialRoutineActivities() {
 
 async function rebuildDB() {
   try {
+    client.connect()
     await dropTables()
+    console.log("Hey")
     await createTables()
     await createInitialUsers()
     await createInitialActivities()
